@@ -112,3 +112,23 @@ def TPF_ids(K2object):
 
 
     return tpf_ids[K2object], campaign[K2object]
+
+
+def M9BoarderTPFs(tpf_id):
+
+    if tpf_id <= 200145415:
+        tpf_list = tpf_id + np.array([-1, +1, +8, +9, +10])
+    elif tpf_id >= 200145416 and tpf_id <= 200145425:
+        tpf_list = tpf_id + np.array([-1, +1, +10, + 11, + 12, -10, -9, -8])
+    elif tpf_id >= 200145426 and tpf_id <= 200145437:
+        tpf_list = tpf_id + np.array([-1, +1, +11, +12, +13. -12, -11, -10])
+    elif tpf_id >= 20014538 and tpf_id <= 200145509:
+        tpf_list = tpf_id + np.array([-1, +1, +11, +12, +13, -13, -12, -11])
+    elif tpf_id >= 200145510 and tpf_id <= 200145520:
+        tpf_list = tpf_id + np.array([-1, +1, +9, +10, +11, -13, -12, -11])
+    elif tpf_id >= 200145521 and tpf_id <= 200145529:
+        tpf_list = tpf_id + np.array([-1, +1, +6, +7, +8, -11, -10, -9])
+    elif tpf_id >= 200145530 and tpf_id <= 200145535:
+        tpf_list = tpf_id + np.array([-1, +1, -8, -7, -6])
+
+    return tpf_list

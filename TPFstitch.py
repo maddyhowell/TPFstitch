@@ -136,6 +136,9 @@ def create_tpf_list(tpf_id_ref, K2_object):
     if K2_object == 'M19':
         tpf_list = tpf_id_ref + np.array([-1, +1, -9, +9, -10, -8, +8, +10])
 
+    elif K2_object == 'M9':
+        tpf_list = K2Ob.M9BoarderTPFs(tpf_id_ref)
+
     ## check to see if tpfs in tpf list are associated with the object. if not the code stops
     tpf_list = checkTPFs(list(tpf_list), K2_object)
 
