@@ -110,7 +110,7 @@ def append_arrays(tpf_ref, tpf_grid, tpf_store, variable = 'FLUX'):
 
     row_big = []
 
-    for idx in range(1):
+    for idx in range(tpf_ref.shape[0]):
 
         for jj in range(n_rows):
             row_temp = tpf_store[int(tpf_grid[jj][0])].hdu[1].data[variable][idx]
