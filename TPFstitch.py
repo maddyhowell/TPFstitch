@@ -1,19 +1,22 @@
 import numpy as np
 from lightkurve import KeplerTargetPixelFile
 import pandas as pd
-import Construct_FITS_file as CFF
+from .Construct_FITS_file import main as CFF
 from lightkurve import search_targetpixelfile
 from tqdm import tqdm
 import sys
 import K2_objects as K2Ob
 
-def find_tpf_pos(tpf_ref, tpf, tpf_id, tpf_grid):
+def find_tpf_pos(tpf_ref, tpf, tpf_id, tpf_grid, check_flag = True):
     """ Find where you tpf is relative to the reference tpf (tpf_ref). Saves the tpf id into a grid"""
 
     ## Check to see if tpf is within 10 pixels of tpf_ref
-    if np.abs(tpf_ref.column - tpf.column) > 10 or np.abs(tpf_ref.row - tpf.row) > 10:
-        print(f"TPF {tpf_id} does not boarder the reference TPF")
-        return tpf_grid
+    if check_flag:
+        column_sum = np.shape(tpf_ref)[2] + np.shape(tpf)[2]
+        row_sum =np.shape(tpf_ref)[1] + np.shape(tpf)[1]
+        if np.abs(tpf_ref.column - tpf.column) > column_sum or np.abs(tpf_ref.row - tpf.row) > row_sum:
+            print(f"TPF {tpf_id} does not boarder the reference TPF")
+            return tpf_grid
 
     flagx = False   # share x-axis
     flagy = False   # share y-axis
@@ -84,18 +87,26 @@ def corners(tpf_ref, tpf):
     return ii, jj
 
 
-def load_TPF(tpf_id, K2_object, download_MAST, local_path):
+def load_TPF(tpf_id, download_MAST, local_path, campaign):
 
-    __, campaign = K2Ob.TPF_ids(K2_object)
+    if download_MAST and len(str(tpf_id).split('.')) == 1:
 
-    if download_MAST:
-        print(f'Loading TPF{tpf_id} from MAST')
         pixelfile = search_targetpixelfile(f"ktwo{tpf_id}")
         tpf = pixelfile.download()
+        print(f'Loading TPF{tpf_id} from MAST')
 
     else:
-        print(f'Loading TPF{tpf_id} from local directory')
-        tpf = KeplerTargetPixelFile(local_path + f'ktwo{tpf_id}-c{campaign}_lpd-targ.fits.gz')
+        if len(str(tpf_id).split('.')) == 1:   ## if a path to a tpf is provided and its not in MAST format, do this
+            tpf = KeplerTargetPixelFile(local_path + f'ktwo{int(tpf_id)}-c{campaign}_lpd-targ.fits.gz')
+            print(f'Loading TPF{int(tpf_id)} from local directory')
+
+        elif 'fits' in tpf_id.split('.'):   ## if a tpf id is provided, do this
+            tpf = KeplerTargetPixelFile(local_path + tpf_id)
+            print(f'Loading TPF with file name {tpf_id} from local directory')
+
+        else:
+            print('Something went wrong. Either not a TPF id or not an accepted file')
+            ## at the moment it wont even reach here cos it will get an error on the statement above
 
     return tpf
 
@@ -130,14 +141,16 @@ def append_arrays(tpf_ref, tpf_grid, tpf_store, variable = 'FLUX'):
 
     return superstamp
 
-def create_tpf_list(tpf_id_ref, K2_object):
+def create_tpf_list(tpf_id_ref, K2_object, campaign):
     """ Create a list of the tpf ids that boarder the middle tpf. currently assumes a grid of 9 tpfs (i.e. pixel size of 15x15). Can write this to be more generalised"""
 
-    if K2_object == 'M19':
-        tpf_list = tpf_id_ref + np.array([-1, +1, -9, +9, -10, -8, +8, +10])
-
+    if K2_object == 'M19' and campaign == '111':
+        tpf_list = int(tpf_id_ref) + np.array([-1, +1, -9, -8, -7, +7, +8, +9])
+    elif K2_object == 'M19' and campaign == '112':
+        tpf_list = int(tpf_id_ref) + np.array([-1, +1, -9, +9, -10, -8, +8, +10])
+    ## todo: the tpf list for M9 C111
     elif K2_object == 'M9':
-        tpf_list = K2Ob.M9BoarderTPFs(tpf_id_ref)
+        tpf_list = K2Ob.M9BoarderTPFs(tpf_id_ref, campaign)
 
     ## check to see if tpfs in tpf list are associated with the object. if not the code stops
     tpf_list = checkTPFs(list(tpf_list), K2_object)
@@ -158,44 +171,28 @@ def checkTPFs(tpf_list, K2_object):
     return tpf_list_copy
 
 
-def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, superstamp_shape = None, file_name = 'Test.fits', download_MAST = True, local_path = '../TPFs/'):
+def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, file_name = 'Test.fits', download_MAST = False, local_path = '/home/user1/Documents/phd_third_year/TPFs/', campaign = '112', superstamp_shape = None):
     """ main function to run code. tpf_list is a list of tpf_ids that you want to include in the 'Superstamp'.
     If not specified, it will find a list of a 9x9 tpf grid around the centre tpf.
-    Object is to check if the TPFs in tpf_list are associated with the object. """
+    Object is to check if the TPFs in tpf_list are associated with the object.
+    superstamp_shape used when there is tpf gaps in the resulting stitched tpf"""
 
-    tpf_ref = load_TPF(tpf_id_ref, K2_object, download_MAST, local_path)
 
     ## define the tpf list is not input. This only works with a 3x3 tpf tpf_grid
     ## if a tpf list is input and not a superstamp shape, it checks to make sure you did want a 3x3 superstamp. Option to change shape is needed
-    if tpf_list != None:
-        print('Stitching the following TPFs into a new superstamp:', tpf_list)
-        print('------------------------------------------------------')
 
-        if superstamp_shape == None:
-            print('You need to input a superstamp shape. Please try again.')
-            sys.exit()
+    tpf_ref = load_TPF(tpf_id_ref, download_MAST, local_path, campaign)
 
-        while len(tpf_list)+1 != superstamp_shape[0]*superstamp_shape[1]:
-            print(f'Superstamp shape of {superstamp_shape} does not equal the number of tpf ids provided')
-            print('What superstamp shape did you want?')
-            n = int(input('Number of rows:'))
-            m = int(input('Number of columns:'))
-            superstamp_shape = (n,m)
-            print('\n')
-        print(f'Making a superstamp with shape {superstamp_shape}')
-        print('\n')
-
-
-    elif K2_object != None:
-        tpf_list = create_tpf_list(tpf_id_ref, K2_object)
-        print('Stitching the following TPFs into a new superstamp:', tpf_list)
-        print('------------------------------------------------------')
-
-        ### is superstamp_shape necessary?
-
-
-    else:
+    if K2_object == None and tpf_list == None:   # no list of tpf id provided but also no K2 object provided so cant make a list of tpf ids
         print('You must either input a K2 object or list of tpfs')
+        sys.exit()
+
+    elif K2_object != None and tpf_list == None:   ## tpf id is provided but no list of tpfs ids provided so need to make one
+        tpf_list = create_tpf_list(tpf_id_ref, K2_object, campaign)
+        print('Stitching the following TPFs into a new superstamp:', tpf_list)
+        print('------------------------------------------------------')
+    elif tpf_list != None:
+        tpf_id_ref = 1
 
     tpf_grid = np.zeros((3,3))
 
@@ -203,23 +200,33 @@ def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, superstamp_shape = 
 
     tpf_store = {tpf_id_ref: tpf_ref}
 
-    for tpf_id in tpf_list:
+    for idx, tpf_id in enumerate(tpf_list):
         # create a grid which contains the locations of each tpf
-        tpf_temp = load_TPF(tpf_id, K2_object, download_MAST, local_path)
+        tpf_temp = load_TPF(tpf_id, download_MAST, local_path, campaign)
+
+        if type(tpf_id) != np.int64:  # If a tpf is a file path then give a random idex for tpf id to store
+            tpf_id = idx + 2
 
         tpf_store.update({tpf_id: tpf_temp})
 
         tpf_grid = find_tpf_pos(tpf_ref, tpf_temp, tpf_id, tpf_grid)
 
 
-    ### if superstamp shape != (3,3) need to remove the zero-rows
     tpf_grid = tpf_grid[:,~np.all(tpf_grid == 0, axis=0)]
     tpf_grid = tpf_grid[~np.all(tpf_grid == 0, axis=1)]
+    print(tpf_grid)
 
-    # if np.shape(tpf_grid) != superstamp_shape:   # check to make sure the tpf_grid shape == the superstamp shape
-    #
-    #     print(f'Something went wrong with the tpf grid shape. tpf grid shape = {np.shape(tpf_grid)}')
-    #     sys.exit()
+    tpf_grid_temp = []
+    if superstamp_shape != None:
+        for row in tpf_grid:
+            tpf_grid_temp.append(np.trim_zeros(row))
+
+        tpf_grid = np.array(tpf_grid_temp)
+        print(tpf_grid)
+
+        if np.shape(tpf_grid) != superstamp_shape:
+            print('Stitched TPF of shape {np.shape(tpf_grid)} is not size you specified of {superstamp_shape}')
+            sys.exit()
 
     print('\n')
     data = {}
@@ -243,6 +250,7 @@ def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, superstamp_shape = 
     flux = append_arrays(tpf_ref, tpf_grid, tpf_store, variable = 'FLUX')                   ## Append flux
     data.update({'FLUX': flux})
     print('Flux array has been appended')
+    # print(np.shape(flux))
 
     flux_err = append_arrays(tpf_ref, tpf_grid, tpf_store, variable = 'FLUX_ERR')           ## Append flux_err
     data.update({'FLUX_ERR': flux_err})
@@ -283,6 +291,8 @@ def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, superstamp_shape = 
 
     tpf_shape = (np.shape(rb_level)[1],np.shape(rb_level)[2])
     bottom_tpf = tpf_store[int(tpf_grid[0][0])]
-    CFF.main(data, bottom_tpf.hdu, new_tpf_name = file_name, tpf_shape = tpf_shape, verbose = False)
+
+    print('Bottom_tpf:', int(tpf_grid[0][0]))
+    CFF(data, bottom_tpf.hdu, new_tpf_name = file_name, tpf_shape = tpf_shape, verbose = False)
 
     return

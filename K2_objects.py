@@ -113,22 +113,50 @@ def TPF_ids(K2object):
 
     return tpf_ids[K2object], campaign[K2object]
 
+def outskirt_EPICIDs(K2object):
 
-def M9BoarderTPFs(tpf_id):
+    tpf_ids = {'M19': [232307555, 232311226, 232305048, 232307616, 232311067, 232307467, 232313427],
+               'M9': [234660893, 234563368, 234563958, 234559535, 234565434, 251248689, 234572782]}
 
-    if tpf_id <= 200145415:
-        tpf_list = tpf_id + np.array([-1, +1, +8, +9, +10])
-    elif tpf_id >= 200145416 and tpf_id <= 200145425:
-        tpf_list = tpf_id + np.array([-1, +1, +10, + 11, + 12, -10, -9, -8])
-    elif tpf_id >= 200145426 and tpf_id <= 200145437:
-        tpf_list = tpf_id + np.array([-1, +1, +11, +12, +13. -12, -11, -10])
-    elif tpf_id >= 20014538 and tpf_id <= 200145509:
-        tpf_list = tpf_id + np.array([-1, +1, +11, +12, +13, -13, -12, -11])
-    elif tpf_id >= 200145510 and tpf_id <= 200145520:
-        tpf_list = tpf_id + np.array([-1, +1, +9, +10, +11, -13, -12, -11])
-    elif tpf_id >= 200145521 and tpf_id <= 200145529:
-        tpf_list = tpf_id + np.array([-1, +1, +6, +7, +8, -11, -10, -9])
-    elif tpf_id >= 200145530 and tpf_id <= 200145535:
-        tpf_list = tpf_id + np.array([-1, +1, -8, -7, -6])
+    return tpf_ids[K2object]
+
+
+def M9BoarderTPFs(tpf_id, campaign):
+    if campaign == '111':
+        if tpf_id <= 200126989:
+            tpf_list = tpf_id + np.array([-1, +1, +8, +9, +10])
+        elif tpf_id >= 200126990 and tpf_id <= 200126999:
+            tpf_list = tpf_id + np.array([-1, +1, +10, + 11, + 12, -10, -9, -8])
+        elif tpf_id >= 200127000 and tpf_id <= 200127011:
+            tpf_list = tpf_id + np.array([-1, +1, +11, +12, +13, -12, -11, -10])
+        elif tpf_id >= 200127012 and tpf_id <= 200127071:
+            tpf_list = tpf_id + np.array([-1, +1, +11, +12, +13, -13, -12, -11])
+
+        elif tpf_id >= 200127072 and tpf_id <= 200127083:
+            tpf_list = tpf_id + np.array([-1, +1, +10, +11, +12, -13, -12, -11])
+        elif tpf_id >= 200127084 and tpf_id <= 200127093:
+            tpf_list = tpf_id + np.array([-1, +1, +9, +10, +11, -12, -11, -10])
+        elif tpf_id >= 200127094 and tpf_id <= 200127103:
+            tpf_list = tpf_id + np.array([-1, +1, +7, +8, +9, -11, -10, -9])
+        elif tpf_id >= 200127104 and tpf_id <= 200127109:
+            tpf_list = tpf_id + np.array([-1, +1, -9, -8, -7])
+        ## todo
+
+## Campaign = 11b
+    elif campaign == '112':
+        if tpf_id <= 200145415:
+            tpf_list = tpf_id + np.array([-1, +1, +8, +9, +10])
+        elif tpf_id >= 200145416 and tpf_id <= 200145425:
+            tpf_list = tpf_id + np.array([-1, +1, +10, + 11, + 12, -10, -9, -8])
+        elif tpf_id >= 200145426 and tpf_id <= 200145437:
+            tpf_list = tpf_id + np.array([-1, +1, +11, +12, +13, -12, -11, -10])
+        elif tpf_id >= 20014538 and tpf_id <= 200145509:
+            tpf_list = tpf_id + np.array([-1, +1, +11, +12, +13, -13, -12, -11])
+        elif tpf_id >= 200145510 and tpf_id <= 200145520:
+            tpf_list = tpf_id + np.array([-1, +1, +9, +10, +11, -13, -12, -11])
+        elif tpf_id >= 200145521 and tpf_id <= 200145529:
+            tpf_list = tpf_id + np.array([-1, +1, +6, +7, +8, -11, -10, -9])
+        elif tpf_id >= 200145530 and tpf_id <= 200145535:
+            tpf_list = tpf_id + np.array([-1, +1, -8, -7, -6])
 
     return tpf_list

@@ -13,7 +13,7 @@ def make_BinTableHDU(data, existing_fitsfile, tpf_shape = (15,15)):
 
     format_shape = len(temp.flatten())
 
-    print('Bin', tpf_shape)
+    # print('Bin', tpf_shape)
 
     tpf_shape = (tpf_shape[1], tpf_shape[0])   # FITS ARE STUPID AND HAVE THE DIMENSIONS FLIPPED!
 
@@ -49,6 +49,9 @@ def make_BinTableHDU(data, existing_fitsfile, tpf_shape = (15,15)):
 
     hdu.header['NAXIS1'] = naxis1_orig
     hdu.header['NAXIS2'] = naxis2_orig
+
+    # hdu.header['1CRV4P'] = existing_fitsfile[1].header['1CRV4P']
+    # print('1CRV4P:', existing_fitsfile[1].header['1CRV4P'])
 
     return hdu, coldefs
 
