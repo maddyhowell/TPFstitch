@@ -175,7 +175,7 @@ def checkTPFs(tpf_list, K2_object):
     return tpf_list_copy
 
 
-def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, file_name = 'Test.fits', download_MAST = False, local_path = '/home/user1/Documents/phd_third_year/TPFs/', campaign = '112', check_flag = True):
+def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, file_name = 'Test.fits', download_MAST = False, local_path = '/home/user1/Documents/phd_third_year/TPFs/', campaign = '112', check_flag = True, superstamp_shape = None):
     """ main function to run code. tpf_list is a list of tpf_ids that you want to include in the 'Superstamp'.
     If not specified, it will find a list of a 9x9 tpf grid around the centre tpf.
     Object is to check if the TPFs in tpf_list are associated with the object.
@@ -216,10 +216,13 @@ def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, file_name = 'Test.f
 
         tpf_grid = find_tpf_pos(tpf_ref, tpf_temp, tpf_id, tpf_grid, check_flag)
 
-
-    tpf_grid = tpf_grid[:,~np.all(tpf_grid == 0, axis=0)]
-    tpf_grid = tpf_grid[~np.all(tpf_grid == 0, axis=1)]
-    print(tpf_grid)
+    if superstamp_shape == None:
+        tpf_grid = tpf_grid[:,~np.all(tpf_grid == 0, axis=0)]
+        tpf_grid = tpf_grid[~np.all(tpf_grid == 0, axis=1)]
+        # print(tpf_grid)
+    else:
+        if superstamp_shape != np.shape(tpf_grid):
+            m = 0  ### TODO: need to code this up to force a superstamp shape if not 3x3
 
     ## find where no tpf data exists
     no_tpfs = []
@@ -241,7 +244,7 @@ def TPFstitch(tpf_id_ref, K2_object = None, tpf_list = None, file_name = 'Test.f
 
         tpf_grid[thing[0]][thing[1]] = tpf_id
 
-    print(tpf_grid)
+    # print(tpf_grid)
     ## to make sure HDU hasn't been rewritten in previous step
     tpf_ref = load_TPF(tpf_id_ref_temp, download_MAST, local_path, campaign, verbose = False)
 
