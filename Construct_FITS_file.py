@@ -4,7 +4,8 @@ from astropy.io import fits
 
 ## Written so that it can take any shaped tpf (I think)!
 
-def make_BinTableHDU(data, existing_fitsfile, tpf_shape = (15,15)):
+
+def make_BinTableHDU(data, existing_fitsfile, tpf_shape, pixel_shifts):
     """ data is in the form of a list of tpfs for difference cadences. existing fits file is a fitsfile from the bottom left TPF of your stitched TPF"""
 
     cols = []
@@ -31,7 +32,7 @@ def make_BinTableHDU(data, existing_fitsfile, tpf_shape = (15,15)):
     cols.append(fits.Column(name='QUALITY', format='J', disp='E14.7', array=data['QUALITY']))
     cols.append(fits.Column(name='POS_CORR1', format='E', disp='E14.7', array=data['POS_CORR1']))
     cols.append(fits.Column(name='POS_CORR2', format='E', disp='E14.7', array=data['POS_CORR2']))
-    cols.append(fits.Column(name='RB_LEVEL', format=f'{format_shape}E', disp='E14.7', array=data['RB_LEVEL'], dim=str(tpf_shape)))
+    # cols.append(fits.Column(name='RB_LEVEL', format=f'{format_shape}E', disp='E14.7', array=data['RB_LEVEL'], dim=str(tpf_shape)))
 
     coldefs = fits.ColDefs(cols)
     hdu = fits.BinTableHDU.from_columns(coldefs)
@@ -50,8 +51,22 @@ def make_BinTableHDU(data, existing_fitsfile, tpf_shape = (15,15)):
     hdu.header['NAXIS1'] = naxis1_orig
     hdu.header['NAXIS2'] = naxis2_orig
 
-    # hdu.header['1CRV4P'] = existing_fitsfile[1].header['1CRV4P']
-    # print('1CRV4P:', existing_fitsfile[1].header['1CRV4P'])
+    if pixel_shifts != None:  ## for a null tpf, need to change the row and col pixel/radecs values
+
+        pixel_col, pixel_row = pixel_shifts['pixel_col'], pixel_shifts['pixel_row']
+        idx_col, idx_row = pixel_shifts['idx_col'], pixel_shifts['idx_row']
+        ra_new, dec_new = pixel_shifts['ra'], pixel_shifts['dec']
+
+        for idx in range(6):
+            hdu.header[f'1CRV{idx+4}P'] = pixel_col
+            hdu.header[f'2CRV{idx+4}P'] = pixel_row
+
+            hdu.header[f'1CRPX{idx+4}'] = idx_col
+            hdu.header[f'2CRPX{idx+4}'] = idx_row
+
+            hdu.header[f'1CRVL{idx+4}'] = ra_new
+            hdu.header[f'2CRVL{idx+4}'] = dec_new
+
 
     return hdu, coldefs
 
@@ -59,7 +74,7 @@ def make_PrimaryHDU(existing_fitsfile):
     """ make the primary HDU. Copied straight from an exisiting TPF """
 
     hdu = fits.PrimaryHDU()
-    hdu.header = existing_fitsfile[0].header
+    hdu.header = existing_fitsfile
 
     return hdu
 
@@ -87,11 +102,12 @@ def make_imageHDU(existing_fitsfile, tpf_shape = (15,15)):
     return hdu
 
 
-def main(data, existing_fitsfile, new_tpf_name = 'test.fits', tpf_shape = (15,15), verbose = True):
+def main(data, existing_fitsfile, new_tpf_name = 'test.fits', tpf_shape = (15,15), verbose = True, pixel_shifts = None):
 
-    hdu_BinTable, coldefs = make_BinTableHDU(data, existing_fitsfile, tpf_shape = tpf_shape)
+    hdu_BinTable, coldefs = make_BinTableHDU(data, existing_fitsfile, tpf_shape, pixel_shifts)
 
-    hdu_Primary = make_PrimaryHDU(existing_fitsfile)
+    primary_header = existing_fitsfile[0].header
+    hdu_Primary = make_PrimaryHDU(primary_header)
 
     hdu_Image = make_imageHDU(existing_fitsfile, tpf_shape = tpf_shape)
 
@@ -108,4 +124,4 @@ def main(data, existing_fitsfile, new_tpf_name = 'test.fits', tpf_shape = (15,15
     new_hdul.writeto(new_tpf_name, overwrite=True)   ## be careful, will overwrite tpf with the same name
     print(f'New fits file has been written called {new_tpf_name}')
 
-    return new_hdul
+    # return new_hdul
