@@ -7,3 +7,9 @@ Currently, TPFstitch is only designed for the NGC 6333 and NGC 6273 clusters, bu
 An example superstamp for NGC 6333 from TPFstitch. The red lines divide the superstamp into the 9 individual TPFs (EPIC 200145500-200145502, 200145512-200145514, \& 200145488-200145490). The centre of the stars contained in the field are illustrated by the white circles, where the larger circles indicate stars with brighter magnitudes.
 <div align="center">
 <img src="tpfstitch_eg.png" width="70%">
+
+To produce the superstamp above, use the following
+
+```
+TS.TPFstitch(200145501, K2_object = 'M9', download_MAST = False, file_name = 'Star.fits')
+```
