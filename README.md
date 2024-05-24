@@ -4,4 +4,4 @@ By inputting the FITs files of between 2-9 K2 target pixel files (TPFs) which sh
 
 Currently, TPFstitch is only designed for the NGC 6333 and NGC 6273 clusters, but it could be easily adapted for any K2 object with several TPFs; e.g. other clusters, asteroids/comets, microlensing events, galaxies, etc. There is also the potential for TPFstitch to be applied to other photometric surveys, such as TESS.
 
-![Alt text] tpfstitch_eg.png
+![Alt text] (tpfstitch_eg.png)
